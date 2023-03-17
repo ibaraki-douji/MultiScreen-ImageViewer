@@ -63,7 +63,7 @@ public class Tray {
         		if (e.getButton() == MouseEvent.BUTTON1) {
         			Frame f = new Frame("MultiScreen " + Main.framei++);
         			try {
-						f.setupImage(Main.image);
+						f.setupGIF(Main.image);
 					} catch (IOException e1) {
 						e1.printStackTrace();
 					}

@@ -9,6 +9,7 @@ import java.awt.Rectangle;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.image.BufferedImage;
+import java.awt.image.RasterFormatException;
 import java.io.File;
 import java.io.IOException;
 
@@ -86,29 +87,52 @@ public class Frame extends JFrame {
 	
 	public void setupGIF(File GIF) throws IOException {
 		removeAll();
-		
-		File end = File.createTempFile("sleeper", ".gif");
-		
+
 		GifDecoder d = new GifDecoder();
 		d.read(GIF.getPath());
 		
-		GifEncoder e = new GifEncoder();
-		e.start(end.getPath());
-		e.setRepeat(0);
-		
-		for (int i = 0; i < d.getFrameCount(); i++) {
-			Image img = new Image(d.getFrame(i));
-			img.resize(screen.width, screen.height);
-			e.addFrame(img.getImage());
-			e.setDelay(d.getDelay(i));
-		}
-		
-		
-		e.finish();
-		
-		Icon icon = new ImageIcon(end.getPath());
-	    label = new JLabel(icon);
-	    frame.add(label);
+		new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				boolean main = false;
+				boolean first = true;
+				while (true) {
+					if (Main.gifCount == -1 || main == true) {
+						main = true;
+						for (int i = 0; i < d.getFrameCount(); i++) {
+							Main.gifCount = i;
+							image = d.getFrame(Main.gifCount);
+							if (first) {
+								Icon icon = new ImageIcon(image);
+							    label = new JLabel(icon);
+							    frame.add(label);
+							    first = false;
+							}
+							try {
+								resize();
+							} catch (NullPointerException | RasterFormatException e) {}
+							try {
+								Thread.sleep(d.getDelay(i));
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
+						}
+					} else {
+						image = d.getFrame(Main.gifCount);
+						if (first) {
+							Icon icon = new ImageIcon(image);
+						    label = new JLabel(icon);
+						    frame.add(label);
+						    first = false;
+						}
+						try {
+							resize();
+						} catch (NullPointerException | RasterFormatException e) {}
+					}
+				}
+			}
+		}).start();
 		
 	}
 	
